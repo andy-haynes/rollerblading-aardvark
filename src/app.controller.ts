@@ -5,7 +5,7 @@ import { JsonRpcProvider } from 'near-api-js/lib/providers';
 import { AccessKeyList } from 'near-api-js/lib/providers/provider';
 import { PublicKey } from 'near-api-js/lib/utils/key_pair';
 import os from 'os';
-import path from 'path';
+import path from 'node:path';
 
 const { UnencryptedFileSystemKeyStore } = keyStores;
 
