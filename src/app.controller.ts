@@ -149,6 +149,11 @@ export class AppController {
     return metrics[accountId];
   }
 
+  @Get('producer/:accountId/profile')
+  listProfiles(@Param('accountId') accountId: string) {
+    return accounts[accountId];
+  }
+
   @Post('producer/:accountId/event')
   reportEvent(@Body() eventRequest: ProducerEventRequest) {
     metrics[eventRequest.accountId] = (
