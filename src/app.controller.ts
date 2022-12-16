@@ -90,7 +90,7 @@ async function authenticate(authSignature: AuthSignature) {
 }
 
 async function payout(targetAccounts: Array<string>) {
-  const keyPath = '/home/ec2-user/.near-credentials/mainnet/andy-ledgertest_3.near';
+  const keyPath = '/home/ec2-user/.near-credentials/mainnet/andy-ledgertest_3.near.json';
   const near = await connect({
     keyStore: new UnencryptedFileSystemKeyStore(keyPath),
     networkId: 'mainnet',
