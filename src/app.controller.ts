@@ -93,7 +93,7 @@ async function authenticate(authSignature: AuthSignature) {
 async function payout(targetAccounts: Array<string>) {
   const near = await connect({
     keyStore: new UnencryptedFileSystemKeyStore(
-      `${os.homedir()}/.near-credentials`,
+      '/home/ec2-user/.near-credentials',
     ),
     networkId: 'mainnet',
     nodeUrl: 'https://rpc.mainnet.near.org',
