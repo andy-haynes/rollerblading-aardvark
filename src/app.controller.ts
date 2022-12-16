@@ -25,14 +25,13 @@ interface Profile {
 }
 
 interface CreateQueryRequest {
-  attributes: Array<{ key: string; value: string }>;
   authSignature: AuthSignature;
-  totalAccounts: number;
+  contractId: string;
 }
 
 interface ViewResultsRequest {
   authSignature: AuthSignature;
-  organizationId: string;
+  contractId: string;
   queryId: string;
 }
 
@@ -71,6 +70,10 @@ async function authenticate(authSignature: AuthSignature) {
   );
 }
 
+const accounts: { [key: string]: any } = {};
+const metrics: { [key: string]: Array<any> } = {};
+const queries: { [key: string]: any } = {};
+
 @Controller()
 export class AppController {
   @Get('consumer/:organizationId')
@@ -89,24 +92,34 @@ export class AppController {
     };
   }
 
-  @Post('consumer/:organizationId/query')
+  @Post('consumer/:contractId/query')
   createQuery(@Body() query: CreateQueryRequest) {
+    const queryId = Math.floor(Math.random() * 10000);
+    queries[queryId] = { ...query, accessed: false };
     return {
       estimatedCost: Math.random() * 10000,
-      queryId: Math.floor(Math.random() * 10000 * query.totalAccounts),
+      queryId,
     };
   }
 
-  @Post('consumer/:organizationId/results/:queryId')
+  @Post('consumer/:contractId/results/:queryId')
   viewResults(@Body() viewResults: ViewResultsRequest) {
+    const queryId = viewResults.queryId || Object.keys(queries)[0];
+    const query = queries[queryId];
+    if (!query.accessed) {
+      // payout
+      queries[queryId] = { ...query, accessed: true };
+    }
+
     return {
       cost: Math.random() * 10000,
-      results: [],
+      results: [Object.entries(accounts).map(([accountId, account]) => account)],
     };
   }
 
   @Post('producer')
   registerProducer(@Body() producer: RegisterProducerRequest) {
+    accounts[producer.accountId] = { profile: producer.profile };
     return {
       accountId: producer.accountId,
     };
