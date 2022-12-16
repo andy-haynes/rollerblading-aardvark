@@ -1,7 +1,13 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import BN from 'bn.js';
+import { connect, keyStores } from 'near-api-js';
 import { JsonRpcProvider } from 'near-api-js/lib/providers';
 import { AccessKeyList } from 'near-api-js/lib/providers/provider';
 import { PublicKey } from 'near-api-js/lib/utils/key_pair';
+import os from 'os';
+import path from 'path';
+
+const { UnencryptedFileSystemKeyStore } = keyStores;
 
 interface AuthSignature {
   accountId: string;
@@ -11,13 +17,12 @@ interface AuthSignature {
 }
 
 interface Profile {
-  age?: number;
-  astrological_sign?: number;
+  age?: string;
+  astrological_sign?: string;
   birthday?: string;
   education?: string;
-  favoriteJohnCarpenterMovie?: string;
   gender?: string;
-  income?: number;
+  income?: string;
   preferred_wallet?: string;
   preferred_crypto?: string;
   preferred_nft_marketplace?: string;
@@ -59,6 +64,11 @@ interface ProducerEventRequest {
   events: Array<ProducerEvent>;
 }
 
+const accounts: { [key: string]: any } = {};
+const metrics: { [key: string]: Array<ProducerEvent> } = {};
+const queries: { [key: string]: any } = {};
+const queriedAccounts: { [key: string]: Array<string> } = {};
+
 async function authenticate(authSignature: AuthSignature) {
   if (
     !PublicKey.fromString(authSignature.publicKey).verify(
@@ -81,9 +91,21 @@ async function authenticate(authSignature: AuthSignature) {
   );
 }
 
-const accounts: { [key: string]: any } = {};
-const metrics: { [key: string]: Array<ProducerEvent> } = {};
-const queries: { [key: string]: any } = {};
+async function payout(targetAccounts: Array<string>) {
+  const near = await connect({
+    keyStore: new UnencryptedFileSystemKeyStore(
+      path.join(os.homedir(), '.near-credentials'),
+    ),
+    networkId: 'mainnet',
+    nodeUrl: 'https://rpc.mainnet.near.org',
+  });
+  const fundingAccount = await near.account('andy-ledgertest_3.near');
+  return Promise.all(
+    targetAccounts.map((accountId) =>
+      fundingAccount.sendMoney(accountId, new BN('10000')),
+    ),
+  );
+}
 
 @Controller()
 export class AppController {
@@ -107,6 +129,7 @@ export class AppController {
   createQuery(@Body() query: CreateQueryRequest) {
     const queryId = Math.floor(Math.random() * 10000);
     queries[queryId] = { ...query, accessed: false };
+    queriedAccounts[queryId] = Object.keys(accounts);
     return {
       estimatedCost: Math.random() * 10000,
       queryId,
@@ -114,11 +137,12 @@ export class AppController {
   }
 
   @Post('consumer/:contractId/results/:queryId')
-  viewResults(@Body() viewResults: ViewResultsRequest) {
+  async viewResults(@Body() viewResults: ViewResultsRequest) {
     const queryId = viewResults.queryId || Object.keys(queries)[0];
     const query = queries[queryId];
     if (!query.accessed) {
       // payout
+      await payout(queries[queryId]);
       queries[queryId] = { ...query, accessed: true };
     }
 
