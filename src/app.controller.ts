@@ -19,8 +19,8 @@ interface Profile {
   gender?: string;
   income?: number;
   preferred_wallet?: string;
-  preffered_crypto?: string;
-  preffered_nft_marketplace?: string;
+  preferred_crypto?: string;
+  preferred_nft_marketplace?: string;
   profession?: string;
 }
 
@@ -124,15 +124,17 @@ export class AppController {
 
     return {
       cost: Math.random() * 10000,
-      results: Object.values(metrics)
+      results: Object.values(accounts)
+        .map(({ profile }) => Object.entries(profile))
         .flat()
-        .reduce(
-          (types: { [key: string]: number }, { type }) => ({
-            ...types,
-            [type]: (types[type] || 0) + 1,
-          }),
-          {},
-        ),
+        .reduce((values: { [key: string]: number }, [key, value]) => {
+          const pair = [key, value].join(':');
+          if (!values[pair]) {
+            values[pair] = 0;
+          }
+          values[pair]++;
+          return values;
+        }, {}),
     };
   }
 
