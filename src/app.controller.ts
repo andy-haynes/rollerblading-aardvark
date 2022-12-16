@@ -1,10 +1,9 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import BN from 'bn.js';
+import { BN } from 'bn.js';
 import { connect, keyStores } from 'near-api-js';
 import { JsonRpcProvider } from 'near-api-js/lib/providers';
 import { AccessKeyList } from 'near-api-js/lib/providers/provider';
 import { PublicKey } from 'near-api-js/lib/utils/key_pair';
-import os from 'os';
 
 const { UnencryptedFileSystemKeyStore } = keyStores;
 
