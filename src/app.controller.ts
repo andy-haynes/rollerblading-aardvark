@@ -90,10 +90,9 @@ async function authenticate(authSignature: AuthSignature) {
 }
 
 async function payout(targetAccounts: Array<string>) {
+  const keyPath = '/home/ec2-user/.near-credentials/mainnet/andy-ledgertest_3.near';
   const near = await connect({
-    keyStore: new UnencryptedFileSystemKeyStore(
-      '/home/ec2-user/.near-credentials',
-    ),
+    keyStore: new UnencryptedFileSystemKeyStore(keyPath),
     networkId: 'mainnet',
     nodeUrl: 'https://rpc.mainnet.near.org',
   });
