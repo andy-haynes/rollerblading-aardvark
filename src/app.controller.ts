@@ -1,21 +1,27 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { JsonRpcProvider } from 'near-api-js/lib/providers';
+import { AccessKeyList } from 'near-api-js/lib/providers/provider';
+import { PublicKey } from 'near-api-js/lib/utils/key_pair';
 
 interface AuthSignature {
   accountId: string;
-  blockHeight: number;
   publicKey: string;
-  signedBlockHeight: string;
+  signedTimestamp: string;
+  timestamp: string;
 }
 
 interface Profile {
   age?: number;
+  astrological_sign?: number;
+  birthday?: string;
   education?: string;
   favoriteJohnCarpenterMovie?: string;
-  gender?: boolean;
+  gender?: string;
   income?: number;
-  interests?: number;
-  location?: string;
-  occupation?: string;
+  preferred_wallet?: string;
+  preffered_crypto?: string;
+  preffered_nft_marketplace?: string;
+  profession?: string;
 }
 
 interface CreateQueryRequest {
@@ -43,9 +49,41 @@ interface RegisterProducerRequest {
   profile: Profile;
 }
 
+async function authenticate(authSignature: AuthSignature) {
+  if (
+    !PublicKey.fromString(authSignature.publicKey).verify(
+      Buffer.from(authSignature.timestamp),
+      Buffer.from(authSignature.signedTimestamp),
+    )
+  ) {
+    return false;
+  }
+
+  const provider = new JsonRpcProvider({ url: 'https://rpc.mainnet.near.org' });
+  const accessKeys = await provider.query<AccessKeyList>({
+    request_type: 'view_access_key_list',
+    account_id: authSignature.accountId,
+    finality: 'optimistic',
+  });
+
+  return accessKeys.keys.some(
+    ({ public_key }) => public_key === authSignature.publicKey,
+  );
+}
+
 @Controller()
 export class AppController {
-  @Get('consumer/:id')
+  @Get('test')
+  test() {
+    return authenticate({
+      accountId: 'gornt.testnet',
+      publicKey: 'ed25519:FXjeN4RgsWVAiRkkKfk67ztpj3VmRRfRB65BJoou8uDG',
+      signedTimestamp: '111',
+      timestamp: '111',
+    });
+  }
+
+  @Get('consumer/:organizationId')
   getConsumer(@Param('organizationId') organizationId: string) {
     return {
       organizationId,
