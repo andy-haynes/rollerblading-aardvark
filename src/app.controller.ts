@@ -37,10 +37,10 @@ interface ViewResultsRequest {
 }
 
 interface RegisterConsumerRequest {
+  authSignature: AuthSignature;
   name: string;
   contractId: string;
-  publicKey: string;
-  signedTx: string;
+  initialBalance: string;
 }
 
 interface RegisterProducerRequest {
@@ -73,16 +73,6 @@ async function authenticate(authSignature: AuthSignature) {
 
 @Controller()
 export class AppController {
-  @Get('test')
-  test() {
-    return authenticate({
-      accountId: 'gornt.testnet',
-      publicKey: 'ed25519:FXjeN4RgsWVAiRkkKfk67ztpj3VmRRfRB65BJoou8uDG',
-      signedTimestamp: '111',
-      timestamp: '111',
-    });
-  }
-
   @Get('consumer/:organizationId')
   getConsumer(@Param('organizationId') organizationId: string) {
     return {
