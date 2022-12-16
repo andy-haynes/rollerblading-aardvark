@@ -141,7 +141,7 @@ export class AppController {
     const query = queries[queryId];
     if (!query.accessed) {
       // payout
-      await payout(queries[queryId]);
+      await payout(queriedAccounts[queryId]);
       queries[queryId] = { ...query, accessed: true };
     }
 
