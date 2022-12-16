@@ -48,6 +48,17 @@ interface RegisterProducerRequest {
   profile: Profile;
 }
 
+interface ProducerEvent {
+  data: any;
+  type: string;
+}
+
+interface ProducerEventRequest {
+  accountId: string;
+  authSignature: AuthSignature;
+  events: Array<ProducerEvent>;
+}
+
 async function authenticate(authSignature: AuthSignature) {
   if (
     !PublicKey.fromString(authSignature.publicKey).verify(
@@ -71,7 +82,7 @@ async function authenticate(authSignature: AuthSignature) {
 }
 
 const accounts: { [key: string]: any } = {};
-const metrics: { [key: string]: Array<any> } = {};
+const metrics: { [key: string]: Array<ProducerEvent> } = {};
 const queries: { [key: string]: any } = {};
 
 @Controller()
@@ -113,7 +124,15 @@ export class AppController {
 
     return {
       cost: Math.random() * 10000,
-      results: [Object.entries(accounts).map(([accountId, account]) => account)],
+      results: Object.values(metrics)
+        .flat()
+        .reduce(
+          (types: { [key: string]: number }, { type }) => ({
+            ...types,
+            [type]: (types[type] || 0) + 1,
+          }),
+          {},
+        ),
     };
   }
 
@@ -122,6 +141,21 @@ export class AppController {
     accounts[producer.accountId] = { profile: producer.profile };
     return {
       accountId: producer.accountId,
+    };
+  }
+
+  @Get('producer/:accountId/events')
+  listEvents(@Param('accountId') accountId: string) {
+    return metrics[accountId];
+  }
+
+  @Post('producer/:accountId/event')
+  reportEvent(@Body() eventRequest: ProducerEventRequest) {
+    metrics[eventRequest.accountId] = (
+      metrics[eventRequest.accountId] || []
+    ).concat(eventRequest.events);
+    return {
+      eventsRecorded: metrics[eventRequest.accountId].length,
     };
   }
 }
